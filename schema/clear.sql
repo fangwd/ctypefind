@@ -1,0 +1,10 @@
+delete from decl_base;
+delete from template_argument;
+delete from type;
+delete from enum_field;
+delete from decl_field;
+delete from decl;
+delete from file;
+delete from func;
+delete from func_param;
+delete from method_override;
