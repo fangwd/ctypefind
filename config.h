@@ -3,8 +3,9 @@
 #include <string>
 
 struct Config {
-    std::string db;
-    Config() : db("typefind.db") {}
+    std::string db_name;
+    bool remove_db;
+    Config() : db_name("typefind.db"), remove_db(false) {}
 };
 
 extern Config config;

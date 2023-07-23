@@ -23,7 +23,9 @@ static int parse_options(int argc, char **argv, std::vector<std::string> &compil
         } else {
             if (arg == "--db") {
                 check_arg(arg);
-                config.db= argv[++i];
+                config.db_name = argv[++i];
+            } else if (arg == "--remove") {
+                config.remove_db = true;
             } else {
                 std::cerr << "Unknown option: '" << arg << "'\n";
                 return 1;
@@ -35,12 +37,18 @@ static int parse_options(int argc, char **argv, std::vector<std::string> &compil
 
 int main(int argc, char **argv) {
     std::vector<std::string> options;
+
     int options_error = parse_options(argc, argv, options);
     if (options_error) {
         return options_error;
     }
 
-    db::Database db(config.db);
+    if (config.remove_db && remove(config.db_name.c_str()) != 0) {
+        std::cerr << "Failed to remove '" << config.db_name << "'\n";
+        return 1;
+    }
+
+    db::Database db(config.db_name);
 
     if (int error = db.clear()) {
         std::cerr << "Failed to clear the database: " << error << "\n";
