@@ -54,7 +54,6 @@ create table `type`(
   id integer primary key,
   name varchar(200),
   qual_name varchar(200),
-  decl_name varchar(200),
   decl_kind varchar(30),
   template_parameter_index int,
   constraint uk_type unique(qual_name, template_parameter_index)

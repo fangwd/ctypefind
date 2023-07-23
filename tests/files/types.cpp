@@ -18,7 +18,8 @@ class T3 {
     Z z;
 };
 
-// type: { decl_name: ns1::T2, name: ns1::T2<double,float>, decl_type: class}
+// type: { name: ns1::T2, qual_name: ns1::T2<double,float>, decl_type: class}
 int g(T3<double, float>& z) { return 1; }
+int h(T3<double, float>& z) { return 1; }
 
 }  // namespace ns1

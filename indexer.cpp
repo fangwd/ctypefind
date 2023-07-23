@@ -267,10 +267,10 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
                 const TagType *tag = p->getAs<TagType>();
                 if (tag) {
                     const TagDecl *decl = tag->getDecl();
-                    row.decl_name = signature_of(decl->getTypeForDecl()->getCanonicalTypeUnqualified());
+                    row.name = signature_of(decl->getTypeForDecl()->getCanonicalTypeUnqualified());
                     row.decl_kind = decl->getKindName();
                 } else if (const auto *typedefType = p->getAs<TypedefType>()) {
-                    row.decl_name = typedefType->getDecl()->getQualifiedNameAsString();
+                    row.name = typedefType->getDecl()->getQualifiedNameAsString();
                     if (dyn_cast<TypeAliasDecl>(typedefType->getDecl())) {
                         row.decl_kind = "using";
                     } else {
@@ -281,7 +281,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
                 }
                 if (auto specialisation = p->getAs<TemplateSpecializationType>()) {
                     // Note above: row.name = record_decl->getQualifiedNameAsString();
-                    row.decl_name = specialisation->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString();
+                    row.name = specialisation->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString();
 
                     std::string args;
                     for (auto &arg : specialisation->template_arguments()) {
@@ -304,7 +304,9 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             }
         }
 
-        row.name = decl_type.getUnqualifiedType().getAsString();
+        if (row.name.empty()) {
+            row.name = decl_type.getUnqualifiedType().getAsString();
+        }
         row.qual_name = signature_of(type);
 
         bool inserted = false;

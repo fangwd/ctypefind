@@ -78,8 +78,7 @@ struct EnumField {
 struct Type {
     int id = 0;
     std::string name;
-    std::string qual_name; // todo: delete this
-    std::string decl_name;
+    std::string qual_name;
     std::string decl_kind;
     int template_parameter_index = -1;
 };
