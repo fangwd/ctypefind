@@ -139,6 +139,7 @@ class Database {
 
    public:
     Database(const char *dbname);
+    Database(std::string &dbname) : Database(dbname.c_str()) {}
     ~Database();
 
     int clear();

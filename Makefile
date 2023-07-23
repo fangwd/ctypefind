@@ -25,7 +25,7 @@ CLANGLIBS = -lclang\
 				-lclangSupport
 LDLIBS = $(CLANGLIBS)
 
-SOURCES = main.cpp indexer.cpp db.cpp util.cpp
+SOURCES = main.cpp indexer.cpp db.cpp util.cpp config.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o) sqlite3.o
 
