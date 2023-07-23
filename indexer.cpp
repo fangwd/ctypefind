@@ -31,7 +31,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
     db::Location location_of(const Decl *d) {
         const clang::FileEntry *fe = getFileEntryForDecl(d, source_manager_);
         db::Location location;
-        location.file = fe->getName().str().c_str();
+        location.file = fe ? fe->getName().str().c_str() : "";
         clang::SourceManager &sm = *source_manager_;
         clang::SourceRange range = d->getSourceRange();
         clang::SourceLocation begin = range.getBegin();
@@ -174,25 +174,21 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
 
     // https://opensource.apple.com/source/lldb/lldb-112/llvm/tools/clang/lib/AST/DeclPrinter.cpp.auto.html
     bool VisitTypedefDecl(TypedefDecl *d) {
-        if (getFileEntryForDecl(d, source_manager_)) {
-            db::Decl row;
-            row.type = "typedef";
-            row.name = d->getQualifiedNameAsString();
-            row.underlying_type = signature_of(d->getUnderlyingType());
-            indexer_.db().insert(row);
-        }
+        db::Decl row;
+        row.type = "typedef";
+        row.name = d->getQualifiedNameAsString();
+        row.underlying_type = signature_of(d->getUnderlyingType());
+        indexer_.db().insert(row);
         return true;
     }
 
     bool VisitTypeAliasDecl(TypeAliasDecl *d) {
-        if (getFileEntryForDecl(d, source_manager_)) {
-            db::Decl row;
-            row.type = "using";
-            row.name = d->getQualifiedNameAsString();
-            row.underlying_type = d->getUnderlyingType().getAsString();
-            row.location = location_of(d);
-            indexer_.db().insert(row);
-        }
+        db::Decl row;
+        row.type = "using";
+        row.name = d->getQualifiedNameAsString();
+        row.underlying_type = d->getUnderlyingType().getAsString();
+        row.location = location_of(d);
+        indexer_.db().insert(row);
         return true;
     }
 
@@ -264,8 +260,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
                 decl_type = ref->getPointeeType();
                 p = ref->getPointeeType().getTypePtr();
             } else {
-                const TagType *tag = p->getAs<TagType>();
-                if (tag) {
+                if (const TagType *tag = p->getAs<TagType>()) {
                     const TagDecl *decl = tag->getDecl();
                     row.name = signature_of(decl->getTypeForDecl()->getCanonicalTypeUnqualified());
                     row.decl_kind = decl->getKindName();
@@ -307,7 +302,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         if (row.name.empty()) {
             row.name = decl_type.getUnqualifiedType().getAsString();
         }
-        row.qual_name = signature_of(type);
+        row.qual_name = type.getAsString();
 
         bool inserted = false;
         auto type_id = db.insert(row, &inserted);
@@ -343,8 +338,6 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
     std::string signature_of(const QualType &type) {
         PrintingPolicy pp(context_.getLangOpts());
         pp.SuppressTagKeyword = true;
-        pp.FullyQualifiedName = true;
-        pp.SuppressTemplateArgsInCXXConstructors = true;
         return type.getCanonicalType().getAsString(pp);
     }
 
