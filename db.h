@@ -25,6 +25,8 @@ struct Decl {
     Location location;
     Comment comment;
 
+    std::string underlying_type;
+
     // classes
     bool is_struct = false;
     bool is_abstract = false;
@@ -37,6 +39,7 @@ struct Decl {
 struct TemplateParam {
     int id;
     int template_id;
+    std::string template_type;   // function or class
     std::string name;   // e.g. T
     std::string kind;   // type/non-type/template
     std::string type;   // when kind is non-type, this is the param type name
@@ -75,10 +78,9 @@ struct EnumField {
 struct Type {
     int id = 0;
     std::string name;
-    std::string qual_name;
+    std::string qual_name; // todo: delete this
     std::string decl_name;
     std::string decl_kind;
-    std::string tmpl_name;
     int template_parameter_index = -1;
 };
 
@@ -144,11 +146,11 @@ class Database {
 
     int clear();
 
-    int get_decl_id(const std::string &name);
+    int get_decl_id(const std::string &name, bool *inserted = nullptr);
     int get_type_id(const std::string &name);
     int get_func_id(const std::string &signature);
 
-    int insert(Decl &decl);
+    int insert(Decl &decl, bool *inserted = nullptr);
     int insert(TemplateParam &param);
 
     int insert(DeclBase &base);

@@ -21,7 +21,7 @@ def print_edges(conn, fp, name):
     print_edges(conn, fp, row[0])
 
 if __name__ == '__main__':
-  conn = sqlite3.connect('faiss.db')
+  conn = sqlite3.connect('faisstypes.db')
   with open('faiss.dot', 'w') as fp:
     fp.write('digraph D {\n')
     print_edges(conn, fp, 'faiss::Index')

@@ -55,8 +55,12 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             if (auto *record_decl = dyn_cast<CXXRecordDecl>(d)) {
                 row.is_abstract = record_decl->isAbstract();
                 row.is_template = record_decl->getDescribedClassTemplate() != nullptr;
+                if (row.is_template) {
+                    row.name = record_decl->getQualifiedNameAsString();
+                }
                 row.is_struct = record_decl->isStruct();
-                db.insert(row);
+                bool inserted = false;
+                db.insert(row, &inserted);
 
                 for (const auto field : record_decl->fields()) {
                     db::DeclField decl_field;
@@ -87,17 +91,20 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
                     }
                     base_order++;
                 }
-                if (auto templ_decl = record_decl->getDescribedClassTemplate()) {
-                    TemplateParameterList *params = templ_decl->getTemplateParameters();
-                    int index = 0;
-                    for (auto &param : *params) {
-                        db::TemplateParam param_row;
-                        param_row.template_id = row.id;
-                        param_row.name = param->getNameAsString();
-                        param_row.is_variadic = param->isParameterPack();
-                        param_row.index = index++;
-                        get_param_kind_and_value(param, param_row);
-                        db.insert(param_row);
+                if (inserted) {
+                    if (auto templ_decl = record_decl->getDescribedClassTemplate()) {
+                        TemplateParameterList *params = templ_decl->getTemplateParameters();
+                        int index = 0;
+                        for (auto &param : *params) {
+                            db::TemplateParam param_row;
+                            param_row.template_id = row.id;
+                            param_row.template_type = "class";
+                            param_row.name = param->getNameAsString();
+                            param_row.is_variadic = param->isParameterPack();
+                            param_row.index = index++;
+                            get_param_kind_and_value(param, param_row);
+                            db.insert(param_row);
+                        }
                     }
                 }
             } else if (auto *enum_decl = dyn_cast<EnumDecl>(d)) {
@@ -162,8 +169,27 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             row.is_overriding = method->size_overridden_methods() > 0;
             row.access = to_string(decl->getAccess());
         }
-
         return row;
+    }
+
+    // https://opensource.apple.com/source/lldb/lldb-112/llvm/tools/clang/lib/AST/DeclPrinter.cpp.auto.html
+    bool VisitTypedefDecl(TypedefDecl *d) {
+        db::Decl row;
+        row.type = "typedef";
+        row.name = d->getQualifiedNameAsString();
+        row.underlying_type = signature_of(d->getUnderlyingType());
+        indexer_.db().insert(row);
+        return true;
+    }
+
+    bool VisitTypeAliasDecl(TypeAliasDecl *d) {
+        db::Decl row;
+        row.type = "using";
+        row.name = d->getQualifiedNameAsString();
+        row.underlying_type = d->getUnderlyingType().getAsString();
+        row.location = location_of(d);
+        indexer_.db().insert(row);
+        return true;
     }
 
     bool VisitFunctionDecl(FunctionDecl *decl) {
@@ -179,6 +205,23 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         }
 
         db.insert(row);
+
+        if (decl->isTemplated()) {
+            TemplateParameterList *params = decl->getDescribedFunctionTemplate()->getTemplateParameters();
+            if (params) {
+                int index = 0;
+                for (auto &param : *params) {
+                    db::TemplateParam param_row;
+                    param_row.template_id = row.id;
+                    param_row.template_type = "function";
+                    param_row.name = param->getNameAsString();
+                    param_row.is_variadic = param->isParameterPack();
+                    param_row.index = index++;
+                    get_param_kind_and_value(param, param_row);
+                    indexer_.db().insert(param_row);
+                }
+            }
+        }
 
         int position = 0;
         for (const auto &param : decl->parameters()) {
@@ -207,58 +250,49 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
     int insert_type(const QualType &type, int decl_id = 0) {
         auto &db = indexer_.db();
         db::Type row;
-
+        std::vector<db::TemplateArgument> template_arguments;
+        QualType decl_type = type;
         for (const Type *p = type.getUnqualifiedType().getTypePtr(); p;) {
-            if (const auto *ptr = dyn_cast<PointerType>(p)) {
+            if (const auto ptr = dyn_cast<PointerType>(p)) {
+                decl_type = ptr->getPointeeType();
                 p = ptr->getPointeeType().getTypePtr();
-            } else if (const auto *ref = dyn_cast<ReferenceType>(p)) {
+            } else if (const auto ref = dyn_cast<ReferenceType>(p)) {
+                decl_type = ref->getPointeeType();
                 p = ref->getPointeeType().getTypePtr();
             } else {
                 const TagType *tag = p->getAs<TagType>();
                 if (tag) {
                     const TagDecl *decl = tag->getDecl();
-                    row.decl_name = decl->getQualifiedNameAsString();
+                    row.decl_name = signature_of(decl->getTypeForDecl()->getCanonicalTypeUnqualified());
                     row.decl_kind = decl->getKindName();
+                } else if (const auto *typedefType = p->getAs<TypedefType>()) {
+                    row.decl_name = typedefType->getDecl()->getQualifiedNameAsString();
+                    if (dyn_cast<TypeAliasDecl>(typedefType->getDecl())) {
+                        row.decl_kind = "using";
+                    } else {
+                        row.decl_kind = "typedef";
+                    }
                 } else if (p->isTemplateTypeParmType()) {
                     row.template_parameter_index = p->getAs<TemplateTypeParmType>()->getIndex();
                 }
-
                 if (auto specialisation = p->getAs<TemplateSpecializationType>()) {
-                    PrintingPolicy pp(context_.getLangOpts());
-                    pp.SuppressTagKeyword = true;
-                    pp.FullyQualifiedName = true;
+                    // Note above: row.name = record_decl->getQualifiedNameAsString();
+                    row.decl_name = specialisation->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString();
 
-                    row.tmpl_name = signature_of(type.getUnqualifiedType());
-
-                    auto name = specialisation->getTemplateName();
-
-                    if (db.get_type_id(row.tmpl_name) == 0) {
-                        std::string args;
-                        for (auto &arg : specialisation->template_arguments()) {
-                            if (args.length() > 0) {
-                                args += ",";
-                            }
-                            args += signature_of(arg);
+                    std::string args;
+                    for (auto &arg : specialisation->template_arguments()) {
+                        if (args.length() > 0) {
+                            args += ",";
                         }
-                        std::string unique_name =
-                            name.getAsTemplateDecl()->getQualifiedNameAsString() + "<" + args + ">";
-                        if (db.get_type_id(unique_name) == 0) {
-                            db::Type tmpl;
-                            tmpl.name = name.getAsTemplateDecl()->getNameAsString();
-                            tmpl.qual_name = row.tmpl_name;
-                            tmpl.decl_kind = "template";
-                            tmpl.qual_name = unique_name;
-                            db.insert(tmpl);
-                            int index = 0;
-                            for (auto &arg : specialisation->template_arguments()) {
-                                db::TemplateArgument row;
-                                row.template_id = tmpl.id;
-                                row.kind = get_template_arg_kind_name(arg.getKind());
-                                row.value = signature_of(arg);
-                                row.index = index++;
-                                db.insert(row);
-                            }
-                        }
+                        args += signature_of(arg);
+                    }
+                    int index = 0;
+                    for (auto &arg : specialisation->template_arguments()) {
+                        db::TemplateArgument row;
+                        row.kind = get_template_arg_kind_name(arg.getKind());
+                        row.value = signature_of(arg);
+                        row.index = index++;
+                        template_arguments.push_back(row);
                     }
                 }
 
@@ -266,9 +300,17 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             }
         }
 
+        row.name = decl_type.getUnqualifiedType().getAsString();
         row.qual_name = signature_of(type);
 
-        return db.insert(row);
+        auto type_id = db.insert(row);
+
+        for (auto &row : template_arguments) {
+            row.template_id = type_id;
+            db.insert(row);
+        }
+
+        return type_id;
     }
 
     std::string pointee_of(const QualType &type) {
@@ -293,6 +335,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         PrintingPolicy pp(context_.getLangOpts());
         pp.SuppressTagKeyword = true;
         pp.FullyQualifiedName = true;
+        pp.SuppressTemplateArgsInCXXConstructors = true;
         return type.getCanonicalType().getAsString(pp);
     }
 

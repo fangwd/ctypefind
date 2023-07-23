@@ -2,9 +2,9 @@ import re
 import json
 import sqlite3
 
-
+DB_NAME = "typetests.db"
 def connect():
-    conn = sqlite3.connect('faiss.db')
+    conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn, conn.cursor()
 

@@ -14,6 +14,9 @@ create table decl(
   brief_comment text,
   comment text,
 
+  -- typedef and using
+  underlying_type varchar(100),
+
   is_struct bool,
   is_abstract bool,
   is_template bool,
@@ -26,6 +29,7 @@ create table decl(
 create table template_parameter(
   id integer primary key,
   template_id int,
+  template_type varchar(20) not null,
   kind varchar(30),
   type varchar(100),
   name varchar(100),
@@ -52,9 +56,8 @@ create table `type`(
   qual_name varchar(200),
   decl_name varchar(200),
   decl_kind varchar(30),
-  tmpl_name varchar(200),
   template_parameter_index int,
-  constraint uk_type unique(qual_name)
+  constraint uk_type unique(qual_name, template_parameter_index)
 );
 create table `template_argument`(
   id integer primary key,

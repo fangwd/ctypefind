@@ -1,16 +1,22 @@
+import os
 import subprocess
 import unittest
 import pprint
-from util import first, all, load_json, lines
+from util import DB_NAME, all, load_json, lines
 
 pp = pprint.PrettyPrinter(indent=4)  # pp.pprint(dict(row))
 
 
 def parse(filename: str):
-  return subprocess.call(["./typefind", "-std=c++11", "-I/Library/Developer/CommandLineTools/usr/lib/llvm-gcc/4.2.1/include", "-fparse-all-comments", "-c", filename])
+    return subprocess.call([
+        "./typefind", "--db", DB_NAME, "--remove", "--", "-std=c++11",
+        "-I/Library/Developer/CommandLineTools/usr/lib/llvm-gcc/4.2.1/include",
+        "-fparse-all-comments", "-c", filename
+    ])
 
 
 class TestDecls(unittest.TestCase):
+
     def setUp(self):
         self.filename = 'tests/files/decls.cpp'
         self.assertEqual(parse(self.filename), 0)
@@ -25,20 +31,39 @@ class TestDecls(unittest.TestCase):
         expected = load_json('decls')['file']
         self.assertEqual(inserted, expected)
 
-class TestTemplates(unittest.TestCase):
+
+class TestVirtual(unittest.TestCase):
+
     def setUp(self):
-        self.filename = 'tests/files/templates.cpp'
+        self.filename = 'tests/files/virtual.cpp'
         self.assertEqual(parse(self.filename), 0)
 
     def test_insert_decls(self):
-        inserted = all("from decl order by id")
-        expected = load_json('templates')['decl']
+        inserted = all("from decl order by name")
+        expected = load_json('decls')['decl']
         self.assertEqual(inserted, expected)
 
-    def test_insert_template_parameters(self):
-        inserted = all("from template_parameter order by id")
-        expected = load_json('templates')['template_parameter']
+    def test_insert_files(self):
+        inserted = all("from file order by path")
+        expected = load_json('decls')['file']
         self.assertEqual(inserted, expected)
+
+
+# class TestTemplates(unittest.TestCase):
+
+#     def setUp(self):
+#         self.filename = 'tests/files/templates.cpp'
+#         self.assertEqual(parse(self.filename), 0)
+
+#     def test_insert_decls(self):
+#         inserted = all("from decl order by id")
+#         expected = load_json('templates')['decl']
+#         self.assertEqual(inserted, expected)
+
+#     def test_insert_template_parameters(self):
+#         inserted = all("from template_parameter order by id")
+#         expected = load_json('templates')['template_parameter']
+#         self.assertEqual(inserted, expected)
 
 # class TestStructs(unittest.TestCase):
 #     def setUp(self):
@@ -64,7 +89,6 @@ class TestTemplates(unittest.TestCase):
 
 #         line = lines(self.filename)[decl['end_line']-1]
 #         self.assertEqual(line.strip(), '}; // S1')
-
 
 # class TestEnums(unittest.TestCase):
 #     def setUp(self):

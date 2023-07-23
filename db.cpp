@@ -124,10 +124,10 @@ int Database::update_comment(const char *table, int id, Comment &comment) {
     return 0;
 }
 
-int Database::insert(Decl &decl) {
+int Database::insert(Decl &decl, bool *inserted) {
     const auto &location = decl.location;
     const auto &comment = decl.comment;
-    decl.id = get_decl_id(decl.name);
+    decl.id = get_decl_id(decl.name, inserted);
 
     MemBuf mb;
 
@@ -135,7 +135,8 @@ int Database::insert(Decl &decl) {
        << sql::field("start_line", location.start_line) << sql::field("end_line", location.end_line)
        << sql::field("is_struct", decl.is_struct) << sql::field("is_abstract", decl.is_abstract)
        << sql::field("is_template", decl.is_template) << sql::field("is_scoped", decl.is_scoped)
-       << sql::field("brief_comment", comment.brief) << sql::field("comment", comment.raw) << " where "
+       << sql::field("brief_comment", comment.brief) << sql::field("comment", comment.raw) 
+       << sql::field("underlying_type", decl.underlying_type) << " where "
        << sql::field("id", decl.id, true);
 
     exec(mb);
@@ -145,9 +146,11 @@ int Database::insert(Decl &decl) {
 
 int Database::insert(TemplateParam &row) {
     MemBuf mb;
-    mb << "insert into template_parameter(template_id, kind, type, name, value, is_variadic, `index`) values ("
-       << row.template_id << ", " << sql::str(row.kind) << ", " << sql::str(row.type) << ", " << sql::str(row.name)
-       << ", " << sql::str(row.value) << ", " << row.is_variadic << ", " << row.index << ")";
+    mb << "insert into template_parameter(template_id, template_type, kind, type, name, value, is_variadic, `index`) "
+          "values ("
+       << row.template_id << ", " << sql::str(row.template_type) << "," << sql::str(row.kind) << ", "
+       << sql::str(row.type) << ", " << sql::str(row.name) << ", " << sql::str(row.value) << ", " << row.is_variadic
+       << ", " << row.index << ")";
     return (row.id = exec(mb));
 }
 
@@ -226,13 +229,16 @@ int Database::get_int(const MemBuf &mb) {
     return id;
 }
 
-int Database::get_decl_id(const std::string &name) {
+int Database::get_decl_id(const std::string &name, bool *inserted) {
     MemBuf mb;
     mb.printf("select id from decl where name = '%s'", name.c_str());
     int id = get_int(mb);
     if (id == 0) {
         mb.clear();
         mb.printf("insert into decl(name) values ('%s')", name.c_str());
+        if (inserted) {
+            *inserted = true;
+        }
         return exec(mb);
     }
     return id;
@@ -258,9 +264,9 @@ int Database::insert(Type &row) {
 
     if (id == 0) {
         mb.clear();
-        mb << "insert into type(name, qual_name, decl_name, decl_kind, tmpl_name, "
+        mb << "insert into type(name, qual_name, decl_name, decl_kind, "
            << "template_parameter_index) values (" << sql::str(row.name) << ", " << sql::str(row.qual_name) << ", "
-           << sql::str(row.decl_name) << ", " << sql::str(row.decl_kind) << ", " << sql::str(row.tmpl_name) << ","
+           << sql::str(row.decl_name) << ", " << sql::str(row.decl_kind)  << ","
            << row.template_parameter_index << ")";
         id = exec(mb);
     }
