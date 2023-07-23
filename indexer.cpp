@@ -206,7 +206,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
 
         db.insert(row);
 
-        if (decl->isTemplated()) {
+        if (decl->isTemplated() && decl->getDescribedFunctionTemplate()) {
             TemplateParameterList *params = decl->getDescribedFunctionTemplate()->getTemplateParameters();
             if (params) {
                 int index = 0;
@@ -303,11 +303,14 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         row.name = decl_type.getUnqualifiedType().getAsString();
         row.qual_name = signature_of(type);
 
-        auto type_id = db.insert(row);
+        bool inserted = false;
+        auto type_id = db.insert(row, &inserted);
 
-        for (auto &row : template_arguments) {
-            row.template_id = type_id;
-            db.insert(row);
+        if (inserted) {
+            for (auto &row : template_arguments) {
+                row.template_id = type_id;
+                db.insert(row);
+            }
         }
 
         return type_id;

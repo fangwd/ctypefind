@@ -156,7 +156,7 @@ class Database {
     int insert(DeclBase &base);
     int insert(DeclField &field);
     int insert(EnumField &field);
-    int insert(Type &type);
+    int insert(Type &type, bool *inserted);
     int insert(TemplateArgument &arg);
     int insert(Function &func);
     int insert(FunctionParam &param);

@@ -36,7 +36,7 @@ create table template_parameter(
   value varchar(200),
   is_variadic bool,
   `index` int, 
-  constraint uk_template_parameter unique(template_id, name),
+  constraint uk_template_parameter unique(template_type, template_id, name),
   constraint fk_template_parameter_template foreign key (template_id) references decl(id) on delete cascade
 );
 

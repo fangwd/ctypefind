@@ -256,7 +256,7 @@ int Database::get_type_id(const std::string &qual_name) {
     return get_int(mb);
 }
 
-int Database::insert(Type &row) {
+int Database::insert(Type &row, bool *inserted) {
     MemBuf mb;
     mb.printf("select id from `type` where `qual_name` = '%s'", row.qual_name.c_str());
 
@@ -269,6 +269,9 @@ int Database::insert(Type &row) {
            << sql::str(row.decl_name) << ", " << sql::str(row.decl_kind)  << ","
            << row.template_parameter_index << ")";
         id = exec(mb);
+        if (inserted) {
+            *inserted = true;
+        }
     }
 
     return (row.id = id);
