@@ -174,21 +174,25 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
 
     // https://opensource.apple.com/source/lldb/lldb-112/llvm/tools/clang/lib/AST/DeclPrinter.cpp.auto.html
     bool VisitTypedefDecl(TypedefDecl *d) {
-        db::Decl row;
-        row.type = "typedef";
-        row.name = d->getQualifiedNameAsString();
-        row.underlying_type = signature_of(d->getUnderlyingType());
-        indexer_.db().insert(row);
+        if (getFileEntryForDecl(d, source_manager_)) {
+            db::Decl row;
+            row.type = "typedef";
+            row.name = d->getQualifiedNameAsString();
+            row.underlying_type = signature_of(d->getUnderlyingType());
+            indexer_.db().insert(row);
+        }
         return true;
     }
 
     bool VisitTypeAliasDecl(TypeAliasDecl *d) {
-        db::Decl row;
-        row.type = "using";
-        row.name = d->getQualifiedNameAsString();
-        row.underlying_type = d->getUnderlyingType().getAsString();
-        row.location = location_of(d);
-        indexer_.db().insert(row);
+        if (getFileEntryForDecl(d, source_manager_)) {
+            db::Decl row;
+            row.type = "using";
+            row.name = d->getQualifiedNameAsString();
+            row.underlying_type = d->getUnderlyingType().getAsString();
+            row.location = location_of(d);
+            indexer_.db().insert(row);
+        }
         return true;
     }
 
