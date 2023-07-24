@@ -321,12 +321,12 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
     }
 
     std::string as_string(QualType type) {
-        if (auto builtin = type.getTypePtr()->getAs<BuiltinType>()) {
-            if (builtin->getKind() == BuiltinType::Bool) {
-                // clang/lib/AST/Type.cpp: return Policy.Bool ? "bool" : "_Bool";
-                return "bool";
-            }
-        }
+        // if (auto builtin = type.getTypePtr()->getAs<BuiltinType>()) {
+        //     if (builtin->getKind() == BuiltinType::Bool) {
+        //         // clang/lib/AST/Type.cpp: return Policy.Bool ? "bool" : "_Bool";
+        //         return "bool";
+        //     }
+        // }
         return type.getAsString();
     }
 
