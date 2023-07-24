@@ -303,12 +303,8 @@ int Database::insert(Function &row) {
 
 int Database::insert(FunctionParam &row) {
     MemBuf mb;
-    mb.printf(R"SQL(
-        insert into func_param(func_id, position, type_id, name)
-        values (%d, %d, %d, '%s')
-    )SQL",
-              row.function_id, row.position, row.type_id, row.name.c_str());
-
+    mb << "insert into func_param(func_id, position, type_id, name, default_value) values (" << row.function_id << ","
+       << row.position << "," << row.type_id << "," << sql::str(row.name) << ", " << sql::str(row.default_value) << ")";
     return (row.id = exec(mb));
 }
 

@@ -115,6 +115,7 @@ struct FunctionParam {
     int position = 0;
     int type_id = 0;
     std::string name;
+    std::string default_value;
 };
 
 struct MethodOverride {

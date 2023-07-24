@@ -123,6 +123,7 @@ create table func_param(
   position int,
   type_id int,
   name varchar(200),
+  default_value varchar(200),
   constraint uk_func_param unique(func_id, position),
   constraint fk_func_param_type foreign key (type_id) references `type`(id) on delete cascade,
   constraint fk_func_param_func foreign key (func_id) references func(id) on delete cascade

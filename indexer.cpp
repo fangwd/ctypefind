@@ -230,6 +230,9 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             r.position = position++;
             r.name = param->getNameAsString();
             r.type_id = insert_type(param->getType());
+            if (auto *expr = param->getInit()) {
+                r.default_value = to_json(expr);
+            }
             indexer_.db().insert(r);
         }
 
@@ -300,9 +303,9 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         }
 
         if (row.name.empty()) {
-            row.name = decl_type.getUnqualifiedType().getAsString();
+            row.name = as_string(decl_type.getUnqualifiedType());
         }
-        row.qual_name = type.getAsString();
+        row.qual_name = as_string(type);
 
         bool inserted = false;
         auto type_id = db.insert(row, &inserted);
@@ -315,6 +318,16 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         }
 
         return type_id;
+    }
+
+    std::string as_string(QualType type) {
+        if (auto builtin = type.getTypePtr()->getAs<BuiltinType>()) {
+            if (builtin->getKind() == BuiltinType::Bool) {
+                // clang/lib/AST/Type.cpp: return Policy.Bool ? "bool" : "_Bool";
+                return "bool";
+            }
+        }
+        return type.getAsString();
     }
 
     std::string pointee_of(const QualType &type) {
