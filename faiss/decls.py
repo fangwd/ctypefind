@@ -1,6 +1,7 @@
 from typing import List
 import re
 
+
 class Argument:
     name: str
     type_name: str
@@ -41,20 +42,35 @@ class Decl:
     def __repr__(self) -> str:
         return f"{self.kind} {self.name}[{self.ctors}] (in {self.file})"
 
+
 class StructField:
     data_type: str
     name: str
 
     def __init__(self, data_type, name) -> None:
-        self.data_type =data_type
+        self.data_type = data_type
         self.name = name
+
+
+class DefaultValue:
+    name: str
+    value: any
+
+    def __init__(self, name, value) -> None:
+        self.name = name
+        self.value = value
+
 
 class Struct:
     name: str
+    decl_name: str
     index_type: str
     fields: List[StructField]
+    default_values: List[DefaultValue]
 
-    def __init__(self, name, index_type) -> None:
+    def __init__(self, name, decl_name, index_type) -> None:
         self.name = name
+        self.decl_name = decl_name
         self.index_type = index_type
         self.fields = []
+        self.default_values = []

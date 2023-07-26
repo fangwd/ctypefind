@@ -1,4 +1,4 @@
-#pragma once
+#include "index_manager.h"
 
 {% for entry in includes %}
 #include {{entry}}
@@ -6,27 +6,17 @@
 
 namespace veclens {
 
-enum class IndexType {
-  {% for entry in index_types %}
-  {{ entry }},
-  {% endfor %}
-};
-
-struct IndexConfig {
-  virtual IndexType index_type() const = 0;
-  virtual ~IndexConfig() {}
-};
-
-{% for entry in structs %}
-struct {{entry.name}}IndexConfig : public IndexConfig {
-  {% for field in entry.fields %}
-    {{field.data_type}} {{field.name}};
-  {% endfor %}
-
-  IndexType index_type() const override {
-    return IndexType::{{entry.index_type}};
+faiss::Index *IndexManager::create_faiss_index(const IndexConfig& index_config) {
+  switch(index_config.index_type()) {
+  {% for entry in structs %}
+  case IndexType::{{ entry.name }}: {
+    const auto &config = *dynamic_cast<const {{entry.name}}IndexConfig*>(&index_config);
+    return new {{entry.decl_name}}({% for field in entry.fields %}config.{{field.name}}{% if not loop.last %}, {% endif %}{% endfor %});
   }
-};
-{% endfor %}
+  {% endfor %}
+  default:
+    return nullptr;
+  }
+}
 
 }

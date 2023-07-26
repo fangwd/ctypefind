@@ -20,8 +20,12 @@ struct IndexConfig {
 {% for entry in structs %}
 struct {{entry.name}}IndexConfig : public IndexConfig {
   {% for field in entry.fields %}
-    {{field.data_type}} {{field.name}};
+    {{fix_cpp_type_name(field.data_type)}} {{field.name}};
   {% endfor %}
+
+  {% if entry.default_values %}
+    {{entry.name}}IndexConfig() : {% for dv in entry.default_values %}{{dv.name}}({{dv.value}}){% if not loop.last %},{% endif %}{%endfor%} {}
+  {% endif %}
 
   IndexType index_type() const override {
     return IndexType::{{entry.index_type}};

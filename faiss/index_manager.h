@@ -2,6 +2,13 @@
 
 #include "index_config.h"
 
-class IndexManager {
+namespace veclens {
 
+class IndexManager {
+   private:
+    faiss::Index* create_faiss_index(const IndexConfig& config);
+
+   public:
 };
+
+}  // namespace veclens
