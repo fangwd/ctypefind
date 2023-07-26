@@ -400,49 +400,72 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         llvm::SmallString<1024> str;
         llvm::raw_svector_ostream out(str);
         PrintingPolicy policy(context_.getLangOpts());
+
         expr->printJson(out, nullptr, policy, false);
-        return std::string(str.c_str());
-    }
 
-    bool VisitEnumConstantDecl(const EnumConstantDecl *decl) {
-        if (accept(decl)) {
-            auto &db = indexer_.db();
-            const clang::EnumDecl *enum_decl = dyn_cast<clang::EnumDecl>(decl->getDeclContext());
-            db::EnumField field;
-            field.enum_id = db.get_decl_id(signature_of(enum_decl->getTypeForDecl()->getCanonicalTypeUnqualified()));
-            field.name = decl->getNameAsString();
-            field.value = decl->getInitVal().getSExtValue();
-            field.location = location_of(decl);
-            field.comment = comment_of(decl);
-            db.insert(field);
+        std::string ns;
+        if (const auto *ref = dyn_cast<DeclRefExpr>(expr)) {
+            const ValueDecl *val = ref->getDecl();
+            if (const_cast<ValueDecl *>(val)->getKind() == Decl::EnumConstant) {
+                const DeclContext *ctx = val->getDeclContext();
+                while (ctx) {
+                    if (const NamespaceDecl *decl = dyn_cast<NamespaceDecl>(ctx)) {
+                        if (!ns.empty()) ns = "::" + ns;
+                        ns = decl->getNameAsString() + ns;
+                    }
+                    ctx = ctx->getParent();
+                }
+            }
         }
-        return true;
-    }
 
-    db::Comment comment_of(const Decl *d) {
-        db::Comment comment;
-        const auto *rc = d->getASTContext().getRawCommentForDeclNoCache(d);
-        if (rc) {
-            comment.raw = rc->getRawText(*source_manager_).str();
-            comment.brief = rc->getBriefText(context_);
+        if (!ns.empty()) {
+            ns += "::";
         }
-        return comment;
+
+        return ns + std::string(str.c_str());
     }
 
-    static const clang::FileEntry *getFileEntryForDecl(const clang::Decl *decl, clang::SourceManager *sourceManager) {
-        if (!decl || !sourceManager) {
-            return 0;
+        bool VisitEnumConstantDecl(const EnumConstantDecl *decl) {
+            if (accept(decl)) {
+                auto &db = indexer_.db();
+                const clang::EnumDecl *enum_decl = dyn_cast<clang::EnumDecl>(decl->getDeclContext());
+                db::EnumField field;
+                field.enum_id =
+                    db.get_decl_id(signature_of(enum_decl->getTypeForDecl()->getCanonicalTypeUnqualified()));
+                field.name = decl->getNameAsString();
+                field.value = decl->getInitVal().getSExtValue();
+                field.location = location_of(decl);
+                field.comment = comment_of(decl);
+                db.insert(field);
+            }
+            return true;
         }
-        clang::SourceLocation sLoc = decl->getLocation();
-        clang::FileID fileID = sourceManager->getFileID(sLoc);
-        return sourceManager->getFileEntryForID(fileID);
-    }
 
-   private:
-    ASTContext &context_;
-    SourceManager *source_manager_;
-    Indexer &indexer_;
-};
+        db::Comment comment_of(const Decl *d) {
+            db::Comment comment;
+            const auto *rc = d->getASTContext().getRawCommentForDeclNoCache(d);
+            if (rc) {
+                comment.raw = rc->getRawText(*source_manager_).str();
+                comment.brief = rc->getBriefText(context_);
+            }
+            return comment;
+        }
+
+        static const clang::FileEntry *getFileEntryForDecl(const clang::Decl *decl,
+                                                           clang::SourceManager *sourceManager) {
+            if (!decl || !sourceManager) {
+                return 0;
+            }
+            clang::SourceLocation sLoc = decl->getLocation();
+            clang::FileID fileID = sourceManager->getFileID(sLoc);
+            return sourceManager->getFileEntryForID(fileID);
+        }
+
+       private:
+        ASTContext &context_;
+        SourceManager *source_manager_;
+        Indexer &indexer_;
+    };
 
 class IndexerASTConsumer : public clang::ASTConsumer {
    public:
