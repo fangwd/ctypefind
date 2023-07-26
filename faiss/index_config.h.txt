@@ -1,0 +1,32 @@
+#pragma once
+
+{% for entry in includes %}
+#include {{entry}}
+{% endfor %}
+
+namespace veclens {
+
+enum class IndexType {
+  {% for entry in index_types %}
+  {{ entry }},
+  {% endfor %}
+};
+
+struct IndexConfig {
+  virtual IndexType index_type() const = 0;
+  virtual ~IndexConfig() {}
+};
+
+{% for entry in structs %}
+struct {{entry.name}}IndexConfig : public IndexConfig {
+  {% for field in entry.fields %}
+    {{field.data_type}} {{field.name}};
+  {% endfor %}
+
+  IndexType index_type() const override {
+    return IndexType::{{entry.index_type}};
+  }
+};
+{% endfor %}
+
+}
