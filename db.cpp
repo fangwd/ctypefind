@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "sql.h"
+#include "util.h"
 
 #define log_error(fmt, ...) fprintf(stderr, fmt "\n", ##__VA_ARGS__)
 
@@ -49,11 +50,11 @@ int Database::table_count() {
 }
 
 int Database::create_tables() {
-    static const char *schema_file = "schema/schema.sql";
+    std::string schema_file = get_exec_path() + "/schema/schema.sql";
 
     MemBuf mb;
-    if (!mb.load(schema_file)) {
-        log_error("Failed to open schema file: %s", schema_file);
+    if (!mb.load(schema_file.c_str())) {
+        log_error("Failed to open schema file: %s", schema_file.c_str());
         return -1;
     }
 
@@ -70,7 +71,7 @@ int Database::create_tables() {
 
 int Database::clear() {
     MemBuf mb;
-    mb.load("schema/clear.sql");
+    mb.load((get_exec_path() + "/schema/clear.sql").c_str());
 
     char *errmsg;
     int result = sqlite3_exec(db_, mb.content(), nullptr, nullptr, &errmsg);

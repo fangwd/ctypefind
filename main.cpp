@@ -26,6 +26,9 @@ static int parse_options(int argc, char **argv, std::vector<std::string> &compil
                 config.db_name = argv[++i];
             } else if (arg == "--remove") {
                 config.remove_db = true;
+            } else if (arg == "--accept") {
+                check_arg(arg);
+                config.accept_paths.push_back(argv[++i]);
             } else {
                 std::cerr << "Unknown option: '" << arg << "'\n";
                 return 1;

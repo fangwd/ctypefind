@@ -1,4 +1,5 @@
 #include "indexer.h"
+#include "config.h"
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/RecursiveASTVisitor.h>
@@ -175,20 +176,24 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
     // https://opensource.apple.com/source/lldb/lldb-112/llvm/tools/clang/lib/AST/DeclPrinter.cpp.auto.html
     bool VisitTypedefDecl(TypedefDecl *d) {
         db::Decl row;
-        row.type = "typedef";
-        row.name = d->getQualifiedNameAsString();
-        row.underlying_type = signature_of(d->getUnderlyingType());
-        indexer_.db().insert(row);
+        if (accept(d)) {
+            row.type = "typedef";
+            row.name = d->getQualifiedNameAsString();
+            row.underlying_type = signature_of(d->getUnderlyingType());
+            indexer_.db().insert(row);
+        }
         return true;
     }
 
     bool VisitTypeAliasDecl(TypeAliasDecl *d) {
         db::Decl row;
-        row.type = "using";
-        row.name = d->getQualifiedNameAsString();
-        row.underlying_type = d->getUnderlyingType().getAsString();
-        row.location = location_of(d);
-        indexer_.db().insert(row);
+        if (accept(d)) {
+            row.type = "using";
+            row.name = d->getQualifiedNameAsString();
+            row.underlying_type = d->getUnderlyingType().getAsString();
+            row.location = location_of(d);
+            indexer_.db().insert(row);
+        }
         return true;
     }
 
@@ -515,7 +520,22 @@ void Indexer::run(std::vector<std::string> &options) {
     tool_invocation.run();
 }
 
-bool Indexer::accept(const char *filename) { return true; }
+bool Indexer::accept(const char *filename) {
+    if (!filename || !filename[0]) {
+        return false;
+    }
+    for (const auto &path : config.accept_paths) {
+        if (strlen(filename) >= path.size()) {
+            if (strncmp(filename, path.c_str(), path.size()) == 0) {
+                if (filename[0] == '/' && filename[1] == 'L') {
+                    std::cout << "### " << filename << " -> " << path << "\n";
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 static std::string get_template_arg_kind_name(const clang::TemplateArgument::ArgKind &kind) {
     switch (kind) {
