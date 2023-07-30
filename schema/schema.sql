@@ -105,6 +105,7 @@ create table func(
   brief_comment text,
   comment text,
   class_id int,
+  type_id int,
   access varchar(32),
   is_static bool,
   is_inline bool,
@@ -115,6 +116,7 @@ create table func(
   is_const bool,
   constraint uk_func unique(signature),
   constraint fk_func_file foreign key (file_id) references file(id) on delete cascade,
+  constraint fk_func_type foreign key (type_id) references `type`(id) on delete cascade,
   constraint fk_func_class foreign key (class_id) references decl(id) on delete cascade
 );
 create table func_param(

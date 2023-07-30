@@ -26,7 +26,8 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
 
     bool accept(const clang::Decl *d) {
         const clang::FileEntry *fe = getFileEntryForDecl(d, source_manager_);
-        return fe && indexer_.accept(fe->getName().str().c_str());
+        // !fe brings a lot of noise, but we want to keep stuff generated using macros
+        return !fe || indexer_.accept(fe->getName().str().c_str());
     }
 
     db::Location location_of(const Decl *d) {
@@ -159,7 +160,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         row.comment = comment_of(decl);
         row.is_static = decl->isStatic();
         row.is_inline = decl->isInlineSpecified();
-
+        row.type_id = insert_type(decl->getReturnType());
         if (const auto *method = dyn_cast<CXXMethodDecl>(decl)) {
             auto &db = indexer_.db();
             row.class_id =
@@ -332,7 +333,8 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         //         return "bool";
         //     }
         // }
-        return type.getAsString();
+        // return type.getAsString();
+        return signature_of(type);
     }
 
     std::string pointee_of(const QualType &type) {

@@ -99,6 +99,7 @@ struct Function {
     Location location;
     Comment comment;
     int class_id = 0;
+    int type_id = 0;
     std::string access;
     bool is_static = false;
     bool is_inline = false;

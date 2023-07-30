@@ -99,14 +99,15 @@ int Database::get_file_id(const std::string &path) {
 }
 
 int Database::update_location(const char *table, int id, Location &location) {
-    //     mb_.clear();
-    //     mb_.printf("update `%s` set file_id=%d, start_line=%d, end_line=%d where id=%d", table, location.file_id,
-    //                location.start_line, location.end_line, id);
+    MemBuf mb;
 
-    //     sqlite3_stmt *stmt;
-    //     sqlite3_prepare_v2(db_, mb_.content(), -1, &stmt, nullptr);
-    //     sqlite3_step(stmt);
-    //     sqlite3_finalize(stmt);
+    mb.printf("update `%s` set file_id=%d, start_line=%d, end_line=%d where id=%d", table, get_file_id(location.file),
+               location.start_line, location.end_line, id);
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db_, mb.content(), -1, &stmt, nullptr);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
 
     return 0;
 }
@@ -291,11 +292,11 @@ int Database::insert(TemplateArgument &row) {
 
 int Database::insert(Function &row) {
     MemBuf mb;
-    mb << "insert into func(name, signature, class_id, access, is_static, is_inline, "
+    mb << "insert into func(name, signature, class_id, type_id, access, is_static, is_inline, "
        << "is_virtual, is_pure, is_ctor, is_overriding, is_const) values (" << sql::str(row.name) << ", "
-       << sql::str(row.signature) << ", " << sql::pk(row.class_id) << ", " << sql::str(row.access) << ", "
-       << row.is_static << ", " << row.is_inline << ", " << row.is_virtual << ", " << row.is_pure << ", " << row.is_ctor
-       << ", " << row.is_overriding << ", " << row.is_const << ")";
+       << sql::str(row.signature) << ", " << sql::pk(row.class_id) << ", " << sql::pk(row.type_id) << ","
+       << sql::str(row.access) << ", " << row.is_static << ", " << row.is_inline << ", " << row.is_virtual << ", "
+       << row.is_pure << ", " << row.is_ctor << ", " << row.is_overriding << ", " << row.is_const << ")";
     row.id = exec(mb);
     update_location("func", row.id, row.location);
     update_comment("func", row.id, row.comment);
