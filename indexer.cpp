@@ -280,10 +280,10 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             } else {
                 if (const TagType *tag = p->getAs<TagType>()) {
                     const TagDecl *decl = tag->getDecl();
-                    row.name = signature_of(decl->getTypeForDecl()->getCanonicalTypeUnqualified());
+                    row.decl_name = signature_of(decl->getTypeForDecl()->getCanonicalTypeUnqualified());
                     row.decl_kind = decl->getKindName();
                 } else if (const auto *typedefType = p->getAs<TypedefType>()) {
-                    row.name = typedefType->getDecl()->getQualifiedNameAsString();
+                    row.decl_name = typedefType->getDecl()->getQualifiedNameAsString();
                     if (dyn_cast<TypeAliasDecl>(typedefType->getDecl())) {
                         row.decl_kind = "using";
                     } else {
@@ -317,10 +317,10 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             }
         }
 
-        if (row.name.empty()) {
-            row.name = as_string(decl_type.getUnqualifiedType());
+        if (row.decl_name.empty()) {
+            row.decl_name = as_string(decl_type.getUnqualifiedType());
         }
-        row.qual_name = as_string(type);
+        row.name = as_string(type);
 
         bool inserted = false;
         auto type_id = db.insert(row, &inserted);

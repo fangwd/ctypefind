@@ -260,14 +260,15 @@ int Database::get_type_id(const std::string &qual_name) {
 
 int Database::insert(Type &row, bool *inserted) {
     MemBuf mb;
-    mb.printf("select id from `type` where `qual_name` = '%s'", row.qual_name.c_str());
+    mb.printf("select id from `type` where `name` = '%s' and template_parameter_index = %d", row.name.c_str(),
+              row.template_parameter_index);
 
     int id = get_int(mb);
 
     if (id == 0) {
         mb.clear();
-        mb << "insert into type(name, qual_name, decl_kind, "
-           << "template_parameter_index) values (" << sql::str(row.name) << ", " << sql::str(row.qual_name) << ", "
+        mb << "insert into type(name, decl_name, decl_kind, "
+           << "template_parameter_index) values (" << sql::str(row.name) << ", " << sql::str(row.decl_name) << ", "
            << sql::str(row.decl_kind) << "," << row.template_parameter_index << ")";
         id = exec(mb);
         if (inserted) {
