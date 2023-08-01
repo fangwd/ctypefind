@@ -26,8 +26,17 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
 
     bool accept(const clang::Decl *d) {
         const clang::FileEntry *fe = getFileEntryForDecl(d, source_manager_);
+        if (!fe) {
+            if (auto decl = llvm::dyn_cast<clang::NamedDecl>(d)) {
+                std::string name = decl->getQualifiedNameAsString();
+                if (name.substr(0, 5) == "std::" || name.substr(0, 2) == "__") {
+                    return false;
+                }
+            }
+            return true;
+        }
         // !fe brings a lot of noise, but we want to keep stuff generated using macros
-        return !fe || indexer_.accept(fe->getName().str().c_str());
+        return indexer_.accept(fe->getName().str().c_str());
     }
 
     db::Location location_of(const Decl *d) {
