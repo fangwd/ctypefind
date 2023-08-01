@@ -39,4 +39,4 @@ sqlite3.o: deps/sqlite/sqlite3.c
 	cc -c -O2 -o $@ $<
 
 clean:
-	rm -f .o jsc
+	rm -f .o typefind
