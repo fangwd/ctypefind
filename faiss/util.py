@@ -28,7 +28,7 @@ def set_func_params(db: sqlite3.Connection, func: Function) -> Function:
 
 
 def set_decl_ctors(db: sqlite3.Connection, decl: Decl) -> Decl:
-    query = "select f.id, f.name, f.comment from func f where f.is_ctor and f.class_id = ?"
+    query = "select f.id, f.name, f.comment from func f where f.is_ctor and f.decl_id = ?"
     cur = db.cursor()
     cur.execute(query, (decl.id,))
     rows = cur.fetchall()

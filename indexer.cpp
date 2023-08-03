@@ -18,6 +18,7 @@ using namespace clang;
 
 static const char *to_string(const AccessSpecifier access);
 static std::string get_template_arg_kind_name(const clang::TemplateArgument::ArgKind &kind);
+static std::string get_ns(const Decl *val);
 
 class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
    public:
@@ -163,7 +164,8 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         db::Function row;
 
         row.id = 0;
-        row.name = decl->getQualifiedNameAsString();
+        row.name = decl->getNameAsString();
+        row.qual_name = decl->getQualifiedNameAsString();
         row.signature = signature_of(decl);
         row.location = location_of(decl);
         row.comment = comment_of(decl);
@@ -172,7 +174,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         row.type_id = insert_type(decl->getReturnType());
         if (const auto *method = dyn_cast<CXXMethodDecl>(decl)) {
             auto &db = indexer_.db();
-            row.class_id =
+            row.decl_id =
                 db.get_decl_id(signature_of(method->getParent()->getTypeForDecl()->getCanonicalTypeInternal()));
             row.is_virtual = method->isVirtual();
             row.is_pure = method->isPure();
@@ -423,14 +425,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         if (const auto *ref = dyn_cast<DeclRefExpr>(expr)) {
             const ValueDecl *val = ref->getDecl();
             if (const_cast<ValueDecl *>(val)->getKind() == Decl::EnumConstant) {
-                const DeclContext *ctx = val->getDeclContext();
-                while (ctx) {
-                    if (const NamespaceDecl *decl = dyn_cast<NamespaceDecl>(ctx)) {
-                        if (!ns.empty()) ns = "::" + ns;
-                        ns = decl->getNameAsString() + ns;
-                    }
-                    ctx = ctx->getParent();
-                }
+                ns = get_ns(val);
             }
         }
 
@@ -569,4 +564,17 @@ static std::string get_template_arg_kind_name(const clang::TemplateArgument::Arg
         case clang::TemplateArgument::ArgKind::Pack:
             return "Pack";
     }
+}
+
+static std::string get_ns(const Decl *val) {
+    std::string ns;
+    const DeclContext *ctx = val->getDeclContext();
+    while (ctx) {
+        if (const NamespaceDecl *decl = dyn_cast<NamespaceDecl>(ctx)) {
+            if (!ns.empty()) ns = "::" + ns;
+            ns = decl->getNameAsString() + ns;
+        }
+        ctx = ctx->getParent();
+    }
+    return ns;
 }

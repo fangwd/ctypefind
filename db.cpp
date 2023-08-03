@@ -293,11 +293,12 @@ int Database::insert(TemplateArgument &row) {
 
 int Database::insert(Function &row) {
     MemBuf mb;
-    mb << "insert into func(name, signature, class_id, type_id, access, is_static, is_inline, "
+    mb << "insert into func(name, qual_name, signature, decl_id, type_id, access, is_static, is_inline, "
        << "is_virtual, is_pure, is_ctor, is_overriding, is_const) values (" << sql::str(row.name) << ", "
-       << sql::str(row.signature) << ", " << sql::pk(row.class_id) << ", " << sql::pk(row.type_id) << ","
-       << sql::str(row.access) << ", " << row.is_static << ", " << row.is_inline << ", " << row.is_virtual << ", "
-       << row.is_pure << ", " << row.is_ctor << ", " << row.is_overriding << ", " << row.is_const << ")";
+       << sql::str(row.qual_name) << ", " << sql::str(row.signature) << ", " << sql::pk(row.decl_id) << ", "
+       << sql::pk(row.type_id) << "," << sql::str(row.access) << ", " << row.is_static << ", " << row.is_inline << ", "
+       << row.is_virtual << ", " << row.is_pure << ", " << row.is_ctor << ", " << row.is_overriding << ", "
+       << row.is_const << ")";
     row.id = exec(mb);
     update_location("func", row.id, row.location);
     update_comment("func", row.id, row.comment);

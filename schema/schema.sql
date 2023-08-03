@@ -98,13 +98,14 @@ create table enum_field(
 create table func(
   id integer primary key,
   name varchar(200),
+  qual_name varchar(200),
   signature varchar(512),
   file_id int,
   start_line int,
   end_line int,
   brief_comment text,
   comment text,
-  class_id int,
+  decl_id int,
   type_id int,
   access varchar(32),
   is_static bool,
@@ -117,7 +118,7 @@ create table func(
   constraint uk_func unique(signature),
   constraint fk_func_file foreign key (file_id) references file(id) on delete cascade,
   constraint fk_func_type foreign key (type_id) references `type`(id) on delete cascade,
-  constraint fk_func_class foreign key (class_id) references decl(id) on delete cascade
+  constraint fk_func_class foreign key (decl_id) references decl(id) on delete cascade
 );
 create table func_param(
   id integer primary key,

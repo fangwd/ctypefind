@@ -95,10 +95,11 @@ struct TemplateArgument {
 struct Function {
     int id = 0;
     std::string name;
+    std::string qual_name;
     std::string signature;
     Location location;
     Comment comment;
-    int class_id = 0;
+    int decl_id = 0;
     int type_id = 0;
     std::string access;
     bool is_static = false;
