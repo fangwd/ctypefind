@@ -267,9 +267,10 @@ int Database::insert(Type &row, bool *inserted) {
 
     if (id == 0) {
         mb.clear();
-        mb << "insert into type(name, decl_name, decl_kind, "
+        mb << "insert into type(name, decl_name, decl_kind, indirection, "
            << "template_parameter_index) values (" << sql::str(row.name) << ", " << sql::str(row.decl_name) << ", "
-           << sql::str(row.decl_kind) << "," << row.template_parameter_index << ")";
+           << sql::str(row.decl_kind) << "," << sql::str(row.indirection, false) << "," << row.template_parameter_index
+           << ")";
         id = exec(mb);
         if (inserted) {
             *inserted = true;

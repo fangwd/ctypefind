@@ -80,6 +80,8 @@ struct Type {
     std::string name;
     std::string decl_name;
     std::string decl_kind;
+    // Note: pointer to reference is not allowed in C++
+    std::string indirection;
     int template_parameter_index = -1;
 };
 

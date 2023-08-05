@@ -276,9 +276,11 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
             if (const auto ptr = dyn_cast<PointerType>(p)) {
                 decl_type = ptr->getPointeeType();
                 p = ptr->getPointeeType().getTypePtr();
+                row.indirection = '*' + row.indirection;
             } else if (const auto ref = dyn_cast<ReferenceType>(p)) {
                 decl_type = ref->getPointeeType();
                 p = ref->getPointeeType().getTypePtr();
+                row.indirection = '&' + row.indirection;
             } else {
                 if (const TagType *tag = p->getAs<TagType>()) {
                     const TagDecl *decl = tag->getDecl();

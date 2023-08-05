@@ -55,6 +55,7 @@ create table `type`(
   name varchar(200),
   decl_name varchar(200),
   decl_kind varchar(30),
+  indirection varchar(20),
   template_parameter_index int,
   constraint uk_type unique(name, template_parameter_index)
 );
