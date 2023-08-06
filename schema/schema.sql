@@ -52,8 +52,8 @@ create table decl_base(
 );
 create table `type`(
   id integer primary key,
-  name varchar(200),
-  decl_name varchar(200),
+  name varchar(200) not null,
+  decl_name varchar(200) not null,
   decl_kind varchar(30),
   indirection varchar(20),
   template_parameter_index int,

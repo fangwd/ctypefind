@@ -298,7 +298,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
                 }
                 if (auto specialisation = p->getAs<TemplateSpecializationType>()) {
                     // Note above: row.name = record_decl->getQualifiedNameAsString();
-                    row.name = specialisation->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString();
+                    row.decl_name = specialisation->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString();
 
                     std::string args;
                     for (auto &arg : specialisation->template_arguments()) {
@@ -324,6 +324,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         if (row.decl_name.empty()) {
             row.decl_name = as_string(decl_type.getUnqualifiedType());
         }
+
         row.name = as_string(type);
 
         bool inserted = false;
@@ -346,8 +347,8 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         //         return "bool";
         //     }
         // }
-        // return type.getAsString();
-        return signature_of(type);
+        return type.getAsString();
+        // return signature_of(type);
     }
 
     std::string pointee_of(const QualType &type) {
