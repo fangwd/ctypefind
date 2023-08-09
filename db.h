@@ -86,9 +86,9 @@ struct Type {
 };
 
 // TemplateArgument for TemplateSpecializationType
-struct TemplateArgument {
+struct TypeArgument {
     int id;
-    int template_id;
+    int type_id;
     std::string kind;   // TemplateArgument::ArgKind
     std::string value;  // type name, expr, etc
     int index;
@@ -161,7 +161,7 @@ class Database {
     int insert(DeclField &field);
     int insert(EnumField &field);
     int insert(Type &type, bool *inserted);
-    int insert(TemplateArgument &arg);
+    int insert(TypeArgument &arg);
     int insert(Function &func);
     int insert(FunctionParam &param);
     int insert(MethodOverride &mo);

@@ -270,7 +270,7 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
     int insert_type(const QualType &type, int decl_id = 0) {
         auto &db = indexer_.db();
         db::Type row;
-        std::vector<db::TemplateArgument> template_arguments;
+        std::vector<db::TypeArgument> type_arguments;
         QualType decl_type = type;
         for (const Type *p = type.getUnqualifiedType().getTypePtr(); p;) {
             if (const auto ptr = dyn_cast<PointerType>(p)) {
@@ -309,11 +309,11 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
                     }
                     int index = 0;
                     for (auto &arg : specialisation->template_arguments()) {
-                        db::TemplateArgument row;
+                        db::TypeArgument row;
                         row.kind = get_template_arg_kind_name(arg.getKind());
                         row.value = signature_of(arg);
                         row.index = index++;
-                        template_arguments.push_back(row);
+                        type_arguments.push_back(row);
                     }
                 }
 
@@ -331,8 +331,8 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
         auto type_id = db.insert(row, &inserted);
 
         if (inserted) {
-            for (auto &row : template_arguments) {
-                row.template_id = type_id;
+            for (auto &row : type_arguments) {
+                row.type_id = type_id;
                 db.insert(row);
             }
         }

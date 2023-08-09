@@ -280,10 +280,10 @@ int Database::insert(Type &row, bool *inserted) {
     return (row.id = id);
 }
 
-int Database::insert(TemplateArgument &row) {
+int Database::insert(TypeArgument &row) {
     MemBuf mb;
-    mb << "insert into template_argument(template_id, kind, value, `index`) "
-       << "values (" << row.template_id << ", " << sql::str(row.kind) << ", " << sql::str(row.value) << ", "
+    mb << "insert into type_argument(type_id, kind, value, `index`) "
+       << "values (" << row.type_id << ", " << sql::str(row.kind) << ", " << sql::str(row.value) << ", "
        << row.index << ")";
     row.id = exec(mb);
     if (row.id <= 0) {

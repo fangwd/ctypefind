@@ -59,14 +59,14 @@ create table `type`(
   template_parameter_index int,
   constraint uk_type unique(name, template_parameter_index)
 );
-create table `template_argument`(
+create table `type_argument`(
   id integer primary key,
-  template_id int,
+  type_id int,
   kind varchar(32),
   `value` varchar(200),
   `index` int,
-  constraint fk_template_argument_template foreign key (template_id) references `type`(id) on delete cascade,
-  constraint uk_template_argument_template_index unique(template_id, `index`)
+  constraint fk_type_argument_template foreign key (type_id) references `type`(id) on delete cascade,
+  constraint uk_type_argument_template_index unique(type_id, `index`)
 );
 create table decl_field(
   id integer primary key,

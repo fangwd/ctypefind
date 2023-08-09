@@ -1,6 +1,6 @@
 delete from decl_base;
 delete from template_parameter;
-delete from template_argument;
+delete from type_argument;
 delete from type;
 delete from enum_field;
 delete from decl_field;
