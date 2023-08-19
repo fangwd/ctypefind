@@ -313,6 +313,10 @@ class IndexerVisitor : public RecursiveASTVisitor<IndexerVisitor> {
                         row.kind = get_template_arg_kind_name(arg.getKind());
                         row.value = signature_of(arg);
                         row.index = index++;
+                        if (arg.getKind() == clang::TemplateArgument::ArgKind::Type) {
+                            auto type = arg.getAsType();
+                            row.referenced_type_id = insert_type(type);
+                        }
                         type_arguments.push_back(row);
                     }
                 }

@@ -282,9 +282,9 @@ int Database::insert(Type &row, bool *inserted) {
 
 int Database::insert(TypeArgument &row) {
     MemBuf mb;
-    mb << "insert into type_argument(type_id, kind, value, `index`) "
+    mb << "insert into type_argument(type_id, kind, value, `index`, referenced_type_id) "
        << "values (" << row.type_id << ", " << sql::str(row.kind) << ", " << sql::str(row.value) << ", "
-       << row.index << ")";
+       << row.index << "," << sql::pk(row.referenced_type_id) << ")";
     row.id = exec(mb);
     if (row.id <= 0) {
         log_error("Failed to insert template argument");

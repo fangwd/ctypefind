@@ -65,7 +65,9 @@ create table `type_argument`(
   kind varchar(32),
   `value` varchar(200),
   `index` int,
+  referenced_type_id int,
   constraint fk_type_argument_template foreign key (type_id) references `type`(id) on delete cascade,
+  constraint fk_type_argument_template foreign key (referenced_type_id) references `type`(id) on delete cascade,
   constraint uk_type_argument_template_index unique(type_id, `index`)
 );
 create table decl_field(

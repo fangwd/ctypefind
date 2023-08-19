@@ -91,6 +91,7 @@ struct TypeArgument {
     int type_id;
     std::string kind;   // TemplateArgument::ArgKind
     std::string value;  // type name, expr, etc
+    int referenced_type_id = 0;
     int index;
 };
 
