@@ -237,7 +237,7 @@ int Database::get_decl_id(const std::string &name, bool *inserted) {
     int id = get_int(mb);
     if (id == 0) {
         mb.clear();
-        mb.printf("insert into decl(name) values ('%s')", name.c_str());
+        mb.printf("insert into decl(type, name, is_scoped) values ('', '%s', false)", name.c_str());
         if (inserted) {
             *inserted = true;
         }
