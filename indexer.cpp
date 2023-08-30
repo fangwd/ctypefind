@@ -534,20 +534,7 @@ void Indexer::run(std::vector<std::string> &options) {
 }
 
 bool Indexer::accept(const char *filename) {
-    if (!filename || !filename[0]) {
-        return false;
-    }
-    for (const auto &path : config.accept_paths) {
-        if (strlen(filename) >= path.size()) {
-            if (strncmp(filename, path.c_str(), path.size()) == 0) {
-                if (filename[0] == '/' && filename[1] == 'L') {
-                    std::cout << "### " << filename << " -> " << path << "\n";
-                }
-                return true;
-            }
-        }
-    }
-    return false;
+    return config.accept(filename);
 }
 
 static std::string get_template_arg_kind_name(const clang::TemplateArgument::ArgKind &kind) {

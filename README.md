@@ -14,7 +14,7 @@ brew install llvm
 cd typefind
 make
 brew install libomp
-./typefind --db faisstypes.db -- -std=c++14 -c faiss/faiss.cpp -I. -I/Library/Developer/CommandLineTools/usr/lib/llvm-gcc/4.2.1/include -I/opt/homebrew/opt/libomp/include -I/usr/local/include
+./typefind --accept /usr/local/include/faiss --db faisstypes.db -- -std=c++14 -c faiss/faiss.cpp -I. -I/Library/Developer/CommandLineTools/usr/lib/llvm-gcc/4.2.1/include -I/opt/homebrew/opt/libomp/include -I/usr/local/include
 ```
 
 Note after brew install:
